@@ -1,0 +1,594 @@
+Prometheus Node Exporter Set Up Details
+=======================================
+
+Node exporter is one of the prometheus exporter
+
+1. Create a system user for Node Exporter without home directory
+	sudo useradd --no-create-home --shell /bin/false node_exporter # --shell /bin/false: Disables login for this user, also creates User Private Group (UPG) that is group name with node_exporter 
+	
+	
+2. Download and Install "prometheus node exporter" 
+	sudo mkdir /opt/node_exporter # opt directory used to install optional software 
+	cd /opt/node_exporter
+	-	Install Prometheus Node Exporter
+	# https://prometheus.io/docs/guides/node-exporter/ 
+	# https://prometheus.io/download/#node_exporter
+	sudo wget https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-amd64.tar.gz # download from the internet
+	or
+	sudo curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.9.1/node_exporter-1.9.1.linux-amd64.tar.gz # -L: Follow redirects (GitHub redirects to CDN) -O: Save the file with its original name (from URL) -LO
+	sudo tar xvfz node_exporter-*.*-amd64.tar.gz # Extract the tar gzip file
+3. Copy node_exporter binary file and change ownership
+	sudo cp node_exporter-*/node_exporter /usr/local/bin # copying node_exporter to target user binary directory, /usr/local/bin for manually installed binaries (user, administrator)
+	sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter # changing the owner for node_exporter
+	
+4. Create a systemd service for Node Exporter
+
+	# /lib/systemd/system and /usr/lib/systemd/system: Reserved for system or package-managed units.
+	# /etc/systemd/system/: Correct location for user-created or custom services.
+	cd /etc/systemd/system
+	vim node_exporter.service
+	---
+	[Unit]
+	Description=Prometheus Node Exporter for REHL VM server - Hostname: %H 
+	Wants=network-online.target
+	After=network-online.target
+	
+	[Service]
+	Type=simple
+	User=node_exporter
+	Group=node_exporter1.9.1
+	ExecStart=/usr/local/bin/node_exporter
+	
+	[Install]
+	WantedBy=multi-user.target # WantedBy=multi-user.target is standard for server-level services
+	# A server-level service is a background program (daemon) that:
+	# - Starts at system boot
+	# - Runs without a user session
+	# - Provides long-running functionality (e.g., web server, database, exporter) (sshd, nginx, mysql, node_exporter)
+	
+5. Reload Systemd Manager Configuration
+	sudo systemctl daemon-reload
+
+6. Enable Node Exporter Service to Start on Boot
+	sudo systemctl enable node_exporter
+
+7. Start Node Exporter Service
+	systemctl start node_exporter
+	
+8. Check Node Exporter Status
+	systemctl status node_exporteri
+	
+	
+9. Test prometheus node-exporter extracting metrics or not
+	http://<replaceWithYourPublicIP>:9100/metrics
+	
+	If your not able see the metrics in the browser, than follow below steps:
+	
+	1. curl <replaceWithYourPublicIP>:9100/metrics # if get data, than open 9100 port using firewall-cmd
+
+	2. How to Open Node Exporter's Port (9100)?
+		Option 1: Open port 9100 directly (best for most cases)
+
+			sudo firewall-cmd --add-port=9100/tcp --permanent
+			sudo firewall-cmd --reload
+			Check if it's open:
+				sudo firewall-cmd --list-ports
+
+		Option 2: Define a custom node_exporter firewalld service (optional)
+
+			If you want to manage it like a named service:
+
+			Create a custom service file:
+				sudo tee /etc/firewalld/services/node_exporter.xml > /dev/null <<EOF
+				<?xml version="1.0" encoding="utf-8"?>
+				<service>
+				  <short>Node Exporter</short>
+				  <description>Prometheus Node Exporter</description>
+				  <port protocol="tcp" port="9100"/>
+				</service>
+				EOF
+				
+			Reload firewalld and apply:
+				sudo firewall-cmd --reload
+				sudo firewall-cmd --add-service=node_exporter --permanent
+				sudo firewall-cmd --reload
+
+				sudo firewall-cmd --service=node_exporter --get-port #firewalld only recognizes predefined services listed in /usr/lib/firewalld/services/ or custom ones you define.
+
+
+Prometheus Set Up Details
+=========================
+	- Prometheus utilizes a pull-based model for collecting metrics, meaning it pulls metrics from configured targets
+
+	- For Dev/testing, I am using WSL2 ubuntu distribution
+	- Both prometheus and Grafana installed inside WSL2
+	- Prometheus official doc link: https://prometheus.io/docs/prometheus/latest/getting_started/
+	
+	Set up Prometheus
+	-----------------
+	1. Create a system user for prometheus service
+		sudo useradd --no-create-home --shell /bin/false prometheus
+	
+	2. Download and install Prometheus
+		sudo mkdir /opt/prometheus
+		cd /opt/prometheus
+		# downloading the prometheus tar zip file from the internet
+		# Useful links while downloading
+		# https://prometheus.io/docs/prometheus/latest/installation/
+		# https://prometheus.io/download/
+		
+		sudo wget
+		# or
+		# sudo curl -LO https://github.com/prometheus/prometheus/releases/download/v2.53.4/prometheus-2.53.4.linux-amd64.tar.gz
+		
+		# extract gzip tar file
+		sudo tar xfvz prometheus-*.*-amd64.tar.gz
+		cd prometheus-*
+		ls -la
+		
+		# copy prometheus binary files to /usr/local/bin
+			prometheus-3.4.0.linux-amd64.tar.gz contains below files:
+				prometheus-2.53.4.linux-amd64/LICENSE
+				prometheus-2.53.4.linux-amd64/NOTICE
+				prometheus-2.53.4.linux-amd64/console_libraries/ # directory
+				prometheus-2.53.4.linux-amd64/consoles/ # directory
+				prometheus-2.53.4.linux-amd64/promtool # library (binary)
+				prometheus-2.53.4.linux-amd64/prometheus.yml # prometheus configuration file
+				prometheus-2.53.4.linux-amd64/prometheus # library (binary)
+			
+	3. copy the libraries (binaries) and change ownership on binaries
+		- sudo cp promtool /usr/local/bin/ # current working directory -> /opt/prometheus/prometheus-2.53.4.linux-amd64
+		- sudo cp prometheus /usr/local/bin/
+			
+		change ownership on binaries
+		- sudo chown prometheus:prometheus /usr/local/bin/prometheus
+		- sudo chown prometheus:prometheus /usr/local/bin/promtool
+		
+	4. Create directory with the name "prometheus" in /etc
+		sudo mkdir /etc/prometheus
+	5. Copy Prometheus Console, Console Libraries, and prometheus.yml to /etc/prometheus
+		- sudo cp -r console_libraries consoles /etc/prometheus/ # -r used to copy full directory with all files inside
+		- sudo cp prometheus.yml /etc/prometheus/
+			
+	6. Change ownership
+		- sudo chown -R prometheus:prometheus /etc/prometheus/consoles
+		- sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
+		- sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
+		
+	7. Edit Prometheus configuration file - /etc/prometheus/prometheus.yml
+	
+		
+		global:
+		  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+		  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+		  # scrape_timeout is set to the global default (10s).
+
+ 
+		# Alertmanager configuration
+		alerting:
+			alertmanagers:
+				- static_configs:
+				- targets:
+					# - alertmanager:9093
+
+		# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+		rule_files:
+			# - "first_rules.yml"
+			# - "second_rules.yml"
+
+		# A scrape configuration containing exactly one endpoint to scrape:
+		# Here it's Prometheus itself.
+		scrape_configs:
+			# The job name is added as a label job=<job_name> to any timeseries scraped from this config.
+			- job_name: "node_exporter_rhelvm"
+			  static_configs:
+				- targets: ["192.168.85.130:9100"] # REHL VM public ip because you installed node_exporter
+				  labels:
+					group: "RHEL VM"
+
+				- targets: ["localhost:9090"] # localhost:9090 is localhost prometheus, it not monitor WSL2 VM
+				  labels:
+					group: "Prometheusmetrics"
+			  
+		
+	8. Create a systemd service for prometheus - /etc/systemd/system/prometheus.service
+		Before creating service file, you need a directory for persistant store to store metrics, etc..
+			sudo mkdir -p /var/lib/prometheus
+			sudo chown -R prometheus:prometheus /var/lib/prometheus
+			
+		service file - /etc/systemd/system/prometheus.service
+			[Unit]
+			Description=Prometheus WSL2
+			Wants=network-online.target
+			After=network-online.target
+
+			[Service]
+			User=prometheus
+			Group=prometheus
+			Type=simple
+			ExecStart=/usr/local/bin/prometheus \ fire
+			  --config.file=/etc/prometheus/prometheus.yml \
+			  --storage.tsdb.path=/var/lib/prometheus/ \
+			  --web.console.templates=/etc/prometheus/consoles \
+			  --web.console.libraries=/etc/prometheus/console_libraries
+
+			[Install]
+			WantedBy=multi-user.target
+	9. sudo systemctl daemon-reload
+	10. sudo systemctl start prometheus
+	11. sudo systemctl enable prometheus
+	12. sudo systemctl status prometheus
+	13. checking
+			http://<WSL2publicIP>:9090/
+			# ifconfig command used to find the IP address
+			# check targets using below url
+			http://<WSL2publicIP>:9090/targets
+			
+			# if you got any access issues try below option:
+			- sudo firewall-cmd --add-port=9090/tcp --permanent   # Prometheus
+			- sudo firewall-cmd --reload
+			
+		
+		
+Grafana Set Up Details
+======================= 	
+	- For Dev/testing, I am using WSL2 ubuntu distribution
+	- Both prometheus and Grafana installed inside WSL2
+	
+	
+	There are 3 ways to install and setup Grafana
+	1. Grafana Labs APT repository
+	2. downloading a .deb package
+	3. downloading a binary .tar.gz file
+	
+	Note: official doc link - https://grafana.com/docs/grafana/latest/setup-grafana/installation/debian/
+
+	Here I choosed 1st option, because "If you install from the APT repository, Grafana automatically updates when you run apt-get update".
+	
+	Steps to install Grafana from the APT repository:
+	
+	1. Install the prerequisite packages:
+		sudo apt-get install -y apt-transport-https software-properties-common wget
+		
+	2. Import the GPG key:
+		sudo mkdir -p /etc/apt/keyrings/
+		wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+		
+		Note:
+			wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add –     ===> Deprecated
+		
+	3. To add a repository for stable releases, This adds the Grafana repository in WSL2 using APT:
+		echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+		
+	4. Updates the list of available packages
+		sudo apt-get update
+	
+	5. Installs the latest OSS release:
+		sudo apt-get install grafana
+		
+	6. Start Grafana service
+		sudo systemctl start grafana-server
+	
+	7. Check the Grafana server status
+		sudo systemctl status grafana-server
+	
+	8. Enable Grafana service which will automatically start the Grafana on boot
+		Sudo systemctl enable grafana-server.service
+	
+	9. checking
+
+		To access Grafana Dashboard open your favorite browser, type server IP and grafana default port 3000.
+			http://your_ip:3000
+			
+		- Grafana default UserName and Password
+			Username: admin
+			Password: admin
+		- change password
+		
+	
+Upto now the installation part was completed. Next part, Configuring Prometheus as Grafana DataSource
+=============================================================================================================
+
+	- click on "Connections" you will find this option in left side panel
+	- select the "Data sources" and click on "Add data source"
+	- Select "Prometheus" you will find it in "Time series databases" type
+	- Set up connection between prometheus and Grafana
+			Connection
+				Prometheus server URL: http://<WSL2publicIP>:9090  # (Dev Env) Server IP where you installed and configured prometheus service
+				Prometheus server URL: http://<private_IP_EC2>:9090  # (Prod Env) Server IP where you installed and configured prometheus service
+			
+			Note: As per your requirement you can do other changes or you can also keep remaining configuration as default
+			
+			I am proceding with defalut options.
+		
+	- click the "Save & test"
+
+Creating Grafana Dashboard to Monitor RHEL Server or WSL2 Server
+=================================================================
+
+	- click on "Dashboards" you will find this option in left side panel
+	- click "New" and select "import"
+	- I am using default dashboard available in Grafana.com, Dashboard ID is 14513 to import Grafana.com
+	- enter 14513 and click "Load"
+	- Under "Options"
+		provide "Name", select "Folder", and DataSource in my case "Prometheus" and click "Import"
+	- all done
+
+	Note: For Prometheus metrics use 19341 dashboard ID
+
+
+Inside On-premises VM:
+==================================================================================
+	sudo firewall-cmd --list-ports # check the ports
+	if 9100/tcp port not showed in the list, than
+		sudo firewall-cmd --add-port=9100/tcp --permanent   # anyone connect to VM using the 9100 port
+		But it is not safe, so allow specific IP or IP ranges
+			sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="172.28.195.15" port protocol="tcp" port="22" accept'
+	sudo firewall-cmd --reload
+	sudo lsof -i :9100 # check 
+	
+
+OpenVPN
+==================================================
+
+"OpenVPN Access Server" setup using AWS marketplace:
+	AWS marketplace for "openVPN Access Server" - https://aws.amazon.com/marketplace
+
+
+	openVPN client download link: 
+		https://openvpn.net/client/
+		client installation for Linux:
+			https://community.openvpn.net/Pages/OpenVPN3Linux
+		
+	SSH into the OpenVPN using any session manager (Putty, mobaXtream):
+		user: openvpnas
+	You should answer to few questions prompted on the window to create the configuration file. you can customize or choose default options.
+		-------------------------------------------------------------------------------------------------------------------------------------------------------
+		Please enter 'yes' to indicate your agreement [no]: yes
+
+		Once you provide a few initial configuration settings,
+		OpenVPN Access Server can be configured by accessing
+		its Admin Web UI using your Web browser.
+
+		Will this be the primary Access Server node?
+		(enter 'no' to configure as a backup or standby node)
+			> Press ENTER for default [yes]: yes
+
+		Please specify the network interface and IP address to be
+		used by the Admin Web UI:
+			(1) all interfaces: 0.0.0.0
+			(2) eth0: 172.31.33.238
+			Please enter the option number from the list above (1- 2).
+			> Press Enter for default [1]:
+
+		What public/private type/algorithms do you want to use for the OpenVPN CA?
+
+			Recommended choices:
+
+			rsa       - maximum compatibility
+			secp384r1 - elliptic curve, higher security than rsa, allows faster connection setup and smaller user profile files
+			showall   - shows all options including non-recommended algorithms.
+			> Press ENTER for default [secp384r1]:
+
+		What public/private type/algorithms do you want to use for the self-signed web certificate?
+
+			Recommended choices:
+
+			rsa       - maximum compatibility
+			secp384r1 - elliptic curve, higher security than rsa, allows faster connection setup and smaller user profile files
+			showall   - shows all options including non-recommended algorithms.
+			> Press ENTER for default [secp384r1]:
+
+		Please specify the port number for the Admin Web UI.
+			> Press ENTER for default [943]:
+
+		Please specify the TCP port number for the OpenVPN Daemon
+			> Press ENTER for default [443]:
+
+			Should client traffic be routed by default through the VPN?
+			> Press ENTER for default [no]:
+
+		Should client DNS traffic be routed by default through the VPN?
+			> Press ENTER for default [no]:
+			Admin user authentication will be  local
+
+		Private subnets detected: ['172.31.0.0/16']
+
+		Should private subnets be accessible to clients by default?
+			> Press ENTER for EC2 default [yes]:
+
+			To initially login to the Admin Web UI, you must use a
+			username and password that successfully authenticates you
+			with the host UNIX system (you can later modify the settings
+			so that RADIUS or LDAP is used for authentication instead).
+
+			You can login to the Admin Web UI as "openvpn" or specify
+			a different user account to use for this purpose.
+
+		Do you wish to login to the Admin UI as "openvpn"?
+			> Press ENTER for default [yes]:
+			Type a password for the 'openvpn' account (if left blank, a random password will be generated):
+			Confirm the password for the 'openvpn' account:
+
+			> Please specify your Activation key (or leave blank to specify later):
+	-------------------------------------------------------------------------------------------------------------------------------------------------------
+	-------------------------------you will get the following information after answering to above questions ----------------------------------------------
+	Initializing OpenVPN...
+	Removing Cluster Admin user login...
+	userdel: user 'admin_c' does not exist
+	Writing as configuration file...
+	Perform sa init...
+	Wiping any previous userdb...
+	Creating default profile...
+	Modifying default profile...
+	Adding new user to userdb...
+	Modifying new user as superuser in userdb...
+	Setting password in db...
+	Getting hostname...
+	Hostname: 3.17.24.30
+	Preparing web certificates...
+	Getting web user account...
+	Adding web group account...
+	Adding web group...
+	groupadd: group 'openvpn_as' already exists
+	Adjusting license directory ownership...
+	Initializing confdb...
+	Initial version is not set. Setting it to 2.13.1...
+	Generating PAM config for openvpnas ...
+	Enabling service
+	Created symlink /etc/systemd/system/multi-user.target.wants/openvpnas.service → /lib/systemd/system/openvpnas.service.
+	Starting openvpnas...
+
+	NOTE: Your system clock must be correct for OpenVPN Access Server
+	to perform correctly.  Please ensure that your time and date
+	are correct on this system.
+
+	Initial Configuration Complete!
+
+	You can now continue configuring OpenVPN Access Server by
+	directing your Web browser to this URL:
+
+	https://3.17.24.30:943/admin
+
+	During normal operation, OpenVPN AS can be accessed via these URLs:
+	Admin  UI: https://3.17.24.30:943/admin
+	Client UI: https://3.17.24.30:943/
+	To login please use the "openvpn" account with  the password you specified during the setup.
+	------------------------------------------------------------------------------------------------------------------------------------------
+
+	you can check the status of the OpenVPN service:
+		 sudo systemctl status openvpnas
+		 
+	you can login into admin UI: https://3.17.24.30:943/admin
+		- you can change: 
+			- "Configuration" - VPN settings
+			- User management
+			- Authentication
+			
+	Download the *.ovpn file:
+		- https://3.17.24.30:943/ and download "user-locked profile"
+		 
+		 
+Client Server (ex: developer laptop/VM):
+	windows: 
+		install openVPN connect app
+			Option 1: (using URL)
+				- enter "3.17.24.30:943"
+				- provide username and password
+			Option 2: using the (*.ovpn file)
+				- upload the file
+				
+			If you want check the you publicIP after connecting the VPN server using openVPN connect:
+				open browser and check "MyIP", if you find that the IP not changed, then open the "Admin UI" and enable the below option (for Full Tunnel) default is Split Tunnel
+					- Should client Internet traffic be routed through the VPN? yes
+					
+	Linux: 
+		Useful links:
+			- https://openvpn.net/cloud-docs/tutorials/configuration-tutorials/connectors/operating-systems/linux/tutorial--learn-to-install-and-control-the-openvpn-3-client.html
+			- https://openvpn.net/as-docs/tutorials/tutorial--connect-with-linux.html#step-3--import-the-connection-profile
+			- (https://openvpn.net/as-docs/tutorials/tutorial--connect-with-linux.html#step-3--import-the-connection-profile)
+			
+		Stpes to install openVPN client:
+			 
+			- For Red Hat Enterprise Linux, install the Fedora EPEL repository:
+				sudo yum localinstall https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+			- Install the OpenVPN 3 repository:
+				sudo yum install -y https://packages.openvpn.net/openvpn-openvpn3-epel-repo-1-1.noarch.rpm
+			- Install the OpenVPN 3 Linux client:
+				sudo yum install openvpn3-client
+			- Start section with OpenVPN Server using config file
+				openvpn3 session-start --config client.ovpn
+				
+				Enter username: openvpn
+				password:
+				
+			- test:
+				ifconfig 
+				you can able to see "tun0" details
+			
+			
+			
+			
+	
+OpenVPN server security group inbound rules:
+		
+	Custom TCP	TCP	943	MypublicIP (admin UI access)
+	HTTPS	TCP	443	MypublicIP (OpenVPN daemon)-optional
+	SSH	TCP 22	MyIP
+	Custom UDP	UDP	1194	<VM Public IP in My laptop>
+	Custom TCP	TCP	9100	(prometheus server private IP)
+	
+
+		
+Inbound rules of prometheus and grafana AWS EC2:
+
+	Custom TCP	TCP	3000	<my_IP> (grafana UI access)
+	Custom TCP	TCP	9090	<Private_IP>/32 (privatIP of EC2, where you installed Grafana)	your data source is Prometheus so grafana need http://<Ip:9090>/
+	SSH	TCP	22	 <my_IP>
+	Custom TCP	TCP	9090	<my_IP> (prometheus UI access)
+
+	Note:
+	- I am using a single AWS server. Both "Prometheus and grafana" are installed inside the server. so I am using private IP adderess for Adding datasource in Grafana.
+		Custom TCP	TCP	9090	<Private_IP>/32 (privatIP of EC2, where you installed prometheus)	your data source is Prometheus so grafana need http://<Ip:9090>/
+	- If you are using different AWS EC2 for Grafana and prometheus, than it deppends on the VPC (network), Region
+		- if both are in same VPC, than <private IP> is fine
+		- if both are in differnt VPC, than use <private_Ip> when  you connected 2VPCs with VPC peering
+		- for other cases use <public_Ip> (I need to check this point, for 2 different regions)
+
+
+debug:
+
+	- open openvpn server and 
+		curl http://RHEL_VPN_IP_tun0:9100/metrics
+
+		if you are getting the metics, then no issue in the VPN tunnel
+	- open prometheus server
+		curl http://openvpn_public_ip:9100/metrics
+		
+		if you get ancurl: (28) Failed to connect to openvpn public ip port 9100 after 129574 ms: Couldn't connect to server, 
+			than the solution is "Reverse Proxy on the OpenVPN Server"
+	
+	why?
+	- configure the OpenVPN server (in AWS) to proxy metrics from the RHEL server to the Prometheus server securely and efficiently.
+		
+	Below i used NGINX as a reverse proxy:
+	- Install NGINX
+
+	1. Check if NGINX is Listening on Port 9100
+	
+		sudo netstat -tulnp | grep 9100
+			Expected output should be:
+				tcp        0      0 0.0.0.0:9100       0.0.0.0:*         LISTEN      <nginx_pid>/nginx
+				
+			note: If nothing is listening → NGINX is misconfigured or not started.
+			
+	2. Confirm NGINX Config
+		cat /etc/nginx/conf.d/node_exporter.conf
+			server {
+				listen 9100;
+
+				location / {
+					proxy_pass http://<RHEL_VPN_IP_tun0>:9100/;
+				}
+			}
+			
+	3. Restart NGINX
+		sudo nginx -t   # Check for syntax errors
+		sudo systemctl restart nginx
+		sudo netstat -tulnp | grep 9100
+					Expected output should be:
+					tcp        0      0 0.0.0.0:9100       0.0.0.0:*         LISTEN      <nginx_pid>/nginx
+					
+	4. Re-test from Prometheus Server
+
+
+			curl http://<openvpn_private_IP:9100/metrics
+			
+			Request flow for RHEL_VM:
+				prometheus -> openVPN server (proxy server configured) -> RHEL_VM
+
+
+
+
+Note: SCP from local cmd to remote server
+	scp <file location in local machine>   <remoteuserIp@hostname>:<destination_path>
