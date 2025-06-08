@@ -139,7 +139,7 @@ Update `prometheus.yml` with your VM and EC2 IPs: (Dev Env)
 ### 5. 📊 Access Prometheus
 Login: `http://localhost:9090` or your EC2 IP
 
-![Prometheus UI]([prometheus_hybrid_monitoring_proj\img\prod_env\prometheus_UI_to_see_targets.png](https://github.com/Pavan-Kumar-Adapala/prometheus_hybrid_monitoring_proj/blob/Prod/img/prod_env/prometheus_UI_to_see_targets.png))
+![Prometheus UI](https://github.com/Pavan-Kumar-Adapala/prometheus_hybrid_monitoring_proj/blob/Prod/img/prod_env/prometheus_UI_to_see_targets.png)
 
 ### 6. 📊 Access Grafana
 
@@ -147,7 +147,7 @@ Login: `http://localhost:3000` or your EC2 IP
 Default creds: `admin / admin`
 
 Import custom dashboards from `grafana/dashboards/`
-![Grafana Dashboard]([prometheus_hybrid_monitoring_proj\img\prod_env\grafana_dashboard.png](https://github.com/Pavan-Kumar-Adapala/prometheus_hybrid_monitoring_proj/blob/Prod/img/prod_env/grafana_dashboard.png))
+![Grafana Dashboard](https://github.com/Pavan-Kumar-Adapala/prometheus_hybrid_monitoring_proj/blob/Prod/img/prod_env/grafana_dashboard.png)
 
 ---
 
