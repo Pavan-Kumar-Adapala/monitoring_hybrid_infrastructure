@@ -14,7 +14,7 @@ It simulates a **real-world hybrid environment** with:
 
 ## 🖼️ Architecture Overview
 
-![Hybrid Monitoring Architecture](prometheus_hybrid_monitoring_proj\img\prometheus_hybrid_monitoring_architecture.gif)
+![Hybrid Monitoring Architecture](https://github.com/Pavan-Kumar-Adapala/prometheus_hybrid_monitoring_proj/blob/Prod/img/prometheus_hybrid_monitoring_architecture.gif)
 
 ---
 
