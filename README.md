@@ -12,13 +12,13 @@ It simulates a **real-world hybrid environment** with:
 
 ---
 
-## 🖼️ Architecture Overview
+## Architecture Overview
 
 ![Hybrid Monitoring Architecture](https://github.com/Pavan-Kumar-Adapala/prometheus_hybrid_monitoring_proj/blob/Prod/img/prometheus_hybrid_monitoring_architecture.gif)
 
 ---
 
-## 🌍 Environments
+## Environments
 
 ### 🔹 Development (WSL2 in Laptop)
 
@@ -34,7 +34,7 @@ It simulates a **real-world hybrid environment** with:
     in this case 
     * `EC2` → private IP of the EC2 instance as target in prometheus.yml file and add openvpn private IP inside EC2 secuirty group tcp 9100
 
-### 🔸 Production (AWS VPC)
+### Production (AWS VPC)
 
 * Prometheus & Grafana on EC2 monitoring node
 * Another EC2 target node in same VPC (private IP access)
@@ -42,7 +42,7 @@ It simulates a **real-world hybrid environment** with:
 
 ---
 
-## 🔐 Security Practices
+## Security Practices
 
 * Only **authorized IPs** are allowed on port `9100`
 * **Reverse proxy (Nginx)** used to route requests from VPN server to local VM
@@ -56,7 +56,7 @@ Below you can able to see the security groups used for production environment
 
 ---
 
-## 📁 Repo Structure
+## Repo Structure
 
 ```bash
 prometheus_hybrid_monitoring_proj
@@ -84,18 +84,18 @@ prometheus_hybrid_monitoring_proj
 
 ---
 
-## 🧪 Features
+## Features
 
-* ✅ Monitor CPU, Memory, Disk, Network (via Node Exporter)
-* ✅ Pull-based metrics collection
-* ✅ Grafana dashboards for system health
-* ✅ OpenVPN client config from RHEL to AWS VPN server
-* ✅ Nginx reverse proxy for metrics tunneling
-* ✅ Shell scripts for quick setup
+* Monitor CPU, Memory, Disk, Network (via Node Exporter)
+* Pull-based metrics collection
+* Grafana dashboards for system health
+* OpenVPN client config from RHEL to AWS VPN server
+* Nginx reverse proxy for metrics tunneling
+* Shell scripts for quick setup
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
 ### 1. 🔧 Install Prometheus & Grafana (Dev)
 
@@ -105,13 +105,13 @@ cd scripts/
 ./install_grafana.sh
 ```
 
-### 2. 🏷️ Start Node Exporter on Each Node
+### 2. Start Node Exporter on Each Node
 
 ```bash
 ./install_node_exporter.sh
 ```
 
-### 3. 🗂️ Configure Targets
+### 3. Configure Targets
 
 Update `prometheus.yml` with your VM and EC2 IPs: (Dev Env)
 
@@ -121,7 +121,7 @@ Update `prometheus.yml` with your VM and EC2 IPs: (Dev Env)
   - "ec2-public-ip:9100"     # EC2 in dev
 ```
 
-### 4. 🔐 Production: Secure Metric Access
+### 4. Production: Secure Metric Access
 
 * Configure **OpenVPN** on RHEL VM using `.ovpn` file
 * Deploy **Nginx** on VPN server to reverse-proxy metrics:
@@ -136,12 +136,12 @@ Update `prometheus.yml` with your VM and EC2 IPs: (Dev Env)
 			}
   ```
 
-### 5. 📊 Access Prometheus
+### 5. Access Prometheus
 Login: `http://localhost:9090` or your EC2 IP
 
 ![Prometheus UI](https://github.com/Pavan-Kumar-Adapala/prometheus_hybrid_monitoring_proj/blob/Prod/img/prod_env/prometheus_UI_to_see_targets.png)
 
-### 6. 📊 Access Grafana
+### 6. Access Grafana
 
 Login: `http://localhost:3000` or your EC2 IP
 Default creds: `admin / admin`
@@ -151,26 +151,12 @@ Import custom dashboards from `grafana/dashboards/`
 
 ---
 
-## 💬 Real-World Relevance
+## Real-World Relevance
 
-* 🔧 Mirrors hybrid infrastructure used in modern IT orgs
-* 🔐 Prioritizes **security**, **scalability**, and **modular automation**
-* 🤖 Shell scripting to eliminate manual errors
-* 🧠 Hands-on understanding of networking, firewalls, and monitoring strategy
+* Mirrors hybrid infrastructure used in modern IT orgs
+* Prioritizes **security**, **scalability**, and **modular automation**
+* Shell scripting to eliminate manual errors
+* Hands-on understanding of networking, firewalls, and monitoring strategy
 * The importance of the Grafana and prometheus tools to setup a centalized monioring system by combining the different cloud provider services and on-premises server
 
 ---
-
-## 🧠 What I Learned
-
-* Prometheus metric scraping in hybrid networks
-* Secure tunneling with OpenVPN for on-prem/cloud integration
-* Building scalable and secure monitoring pipelines
-* Writing clean automation scripts for deployment
-* Debugging the networking issues and firewall issues
-
----
-
-## 📎 Connect with Me
-
-📍 **LinkedIn**: \[https://www.linkedin.com/in/pavankumar-adapala/]
