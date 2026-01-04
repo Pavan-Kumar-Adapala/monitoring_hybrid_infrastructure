@@ -1,4 +1,4 @@
-## 📊 Hybrid Infrastructure Monitoring with Prometheus & Grafana
+## 📊 Centralized Monitoring & Performance Optimization for Hybrid Infrastructure with Prometheus & Grafana
 
 In this project, operated a **hybrid production infrastructure** consisting of **cloud-based virtual machines**, **Kubernetes clusters**, and **on-premise Linux systems (RHEL)**. The goal was to **detect bottlenecks early** and ensure the **stability of the entire platform** across all infrastructure layers.
 
