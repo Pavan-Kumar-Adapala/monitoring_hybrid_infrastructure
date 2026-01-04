@@ -1,9 +1,13 @@
 ## 📊 Hybrid Infrastructure Monitoring with Prometheus & Grafana
 
-### 🔧 Monitor On-Prem & AWS EC2 Nodes with Secure Metric Collection
-This project demonstrates how to set up a **Prometheus + Grafana** monitoring stack that can securely collect metrics from both **on-premises (VMware-based RHEL)** and **cloud-based (AWS EC2)** servers.
+In this project, operated a **hybrid production infrastructure** consisting of **cloud-based virtual machines**, **Kubernetes clusters**, and **on-premise Linux systems (RHEL)**. The goal was to **detect bottlenecks early** and ensure the **stability of the entire platform** across all infrastructure layers.
 
-It simulates a **real-world hybrid environment** with:
+Implemented a centralized **Prometheus and Grafana monitoring stack** that collected both **VM-level metrics** and **container/cluster metrics**. Using **Node Exporter**, monitored CPU, memory, disk, and network usage of cloud and on-premise VMs, while **cAdvisor** provided detailed resource metrics at the pod and container level in Kubernetes. Secure connectivity for on-premise systems was ensured via **VPN connections and restrictive firewall rules**.
+
+By correlating **VM and Kubernetes metrics**, detected **rising memory usage and CPU throttling in specific pods early**. Based on these metrics, **adjusted Kubernetes resource requests and limits proactively**, preventing **performance degradation and pod restarts** in production before users were affected.
+
+
+A **real-world hybrid environment** with:
 
 * **Dev environment** running on a local laptop (WSL2 + VMware)
 * **Prod environment** running on AWS (EC2 instances in a VPC)
