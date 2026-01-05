@@ -7,6 +7,9 @@ Implemented a centralized **Prometheus and Grafana monitoring stack** that colle
 By correlating **VM and Kubernetes metrics**, detected **rising memory usage and CPU throttling in specific pods early**. Based on these metrics, **adjusted Kubernetes resource requests and limits proactively**, preventing **performance degradation and pod restarts** in production before users were affected.
 
 
+![Overview](./img/Monitoring_overview.png)
+
+
 A **real-world hybrid environment** with:
 
 * **Dev environment** running on a local laptop (WSL2 + VMware)
